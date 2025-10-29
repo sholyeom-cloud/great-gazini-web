@@ -4,132 +4,227 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>The Great Gazini 🔮</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body {
+      background: #0f0f14;
+      color: #e8e6e3;
+      font-family: Segoe UI, system-ui, sans-serif;
+      margin: 0;
+    }
+    main {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 24px;
+      position: relative;
+      min-height: 100vh;
+      box-sizing: border-box;
+    }
+    h1 {
+      text-align: center;
+      margin: 0 0 16px;
+      font-size: 1.8em;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    input, select, button {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: none;
+    }
+    input, select {
+      background: #1b1b21;
+      color: #e8e6e3;
+    }
+    button {
+      background: #262630;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #343446;
+    }
+    #cards {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 12px;
+    }
+    #cards div {
+      text-align: center;
+    }
+    #cards img {
+      width: 180px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #000;
+      transition: transform 0.3s;
+    }
+    #cards img:hover {
+      transform: scale(1.05);
+    }
+    #output {
+      white-space: pre-wrap;
+      background: #121219;
+      padding: 14px;
+      border-radius: 12px;
+      margin-top: 20px;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    footer {
+      position: fixed;
+      bottom: 10px;
+      left: 10px;
+      font-size: 14px;
+      color: #aaa;
+    }
+    footer a {
+      color: #e8e6e3;
+      text-decoration: none;
+      border-bottom: 1px dotted #555;
+    }
+    footer a:hover {
+      color: #fff;
+    }
+
+    /* 📱 MOBILE FIXES */
+    @media (max-width: 700px) {
+      h1 {
+        font-size: 1.4em;
+        margin-bottom: 10px;
+      }
+      #cards img {
+        width: 90px; /* 🔮 smaller cards for phones */
+      }
+      #output {
+        font-size: 0.9rem;
+        padding: 10px;
+      }
+      input, select, button {
+        width: 100%;
+        max-width: 280px;
+      }
+      footer {
+        position: static;
+        text-align: center;
+        margin-top: 30px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <header>
-    <h1>🔮 The Great Gazini</h1>
-    <p class="subtitle">AI Tarot Reader & Mystic Psychic</p>
-  </header>
-
   <main>
-    <form id="readingForm">
-      <label for="name">Tvoje ime:</label>
-      <input type="text" id="name" name="name" placeholder="Vpiši ime..." />
+    <h1>🔮 The Great Gazini 🔮</h1>
 
-      <label for="sign">Znamenje:</label>
-      <select id="sign" name="sign">
-        <option value="oven">Oven</option><option value="bik">Bik</option>
-        <option value="dvojček">Dvojček</option><option value="rak">Rak</option>
-        <option value="lev">Lev</option><option value="devica">Devica</option>
-        <option value="tehtnica">Tehtnica</option><option value="škorpijon">Škorpijon</option>
-        <option value="strelec">Strelec</option><option value="kozorog">Kozorog</option>
-        <option value="vodnar">Vodnar</option><option value="ribi">Ribi</option>
+    <div class="row">
+      <input id="name" placeholder="Tvoje ime" />
+      <select id="sign">
+        <option>oven</option><option>bik</option><option>dvojček</option><option>rak</option>
+        <option>lev</option><option>devica</option><option>tehtnica</option><option>škorpijon</option>
+        <option>strelec</option><option>kozorog</option><option>vodnar</option><option>ribi</option>
       </select>
-
-      <button type="submit">🔮 Preberi svojo usodo</button>
-      <button type="button" id="manualBtn">🖐 Vnesi karte ročno</button>
-    </form>
-
-    <div id="manualInput" style="display:none;">
-      <p>Vnesi 3 karte (ločene z vejico ali presledkom):</p>
-      <input type="text" id="manualCards" placeholder="npr. The Sun, Justice, The Fool" />
-      <button id="manualSubmit">Pošlji karte</button>
     </div>
 
-    <div id="loading" class="hidden">
-      <p>The Great Gazini bere tvojo usodo... ✨</p>
-      <audio id="chime" src="{{ url_for('static', filename='chime.mp3') }}" preload="auto"></audio>
+    <div class="row">
+      <button id="autoBtn">🎲 Avtomatsko branje</button>
+      <button id="manualBtn">✋ Ročno branje</button>
     </div>
 
-    <div id="result" class="hidden">
-      <div id="cards"></div>
-      <p id="reading"></p>
+    <div id="manualInput" style="display:none;text-align:center;margin-bottom:10px;">
+      <input id="card1" placeholder="Karta 1 (npr. The Sun)" style="margin:4px;">
+      <input id="card2" placeholder="Karta 2 (npr. The Moon)" style="margin:4px;">
+      <input id="card3" placeholder="Karta 3 (npr. Death)" style="margin:4px;">
+      <button id="manualStart">🔮 Pošlji karte</button>
     </div>
+
+    <div id="cards"></div>
+    <pre id="output"></pre>
   </main>
 
   <footer>
-    <p>Hočeš tvojo spletno stran? <a href="https://instagram.com/sholyeom" target="_blank">@sholyeom</a></p>
+    💫 Hočeš svojo spletno stran?
+    <a href="https://www.instagram.com/tilen_supoort/" target="_blank">KLIKNI ME IN PIŠI</a>
   </footer>
 
-  <script>
-    const form = document.getElementById("readingForm");
-    const loading = document.getElementById("loading");
-    const result = document.getElementById("result");
-    const cardsDiv = document.getElementById("cards");
-    const readingText = document.getElementById("reading");
-    const chime = document.getElementById("chime");
-    const manualBtn = document.getElementById("manualBtn");
-    const manualInput = document.getElementById("manualInput");
-    const manualSubmit = document.getElementById("manualSubmit");
+  <audio id="chime" src="/static/chime.mp3"></audio>
 
-    manualBtn.onclick = () => {
+  <script>
+    const synth = window.speechSynthesis;
+    const chime = document.getElementById("chime");
+
+    function speak(text) {
+      if (!synth) return;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "en-US";
+      utter.pitch = 1;
+      utter.rate = 0.9;
+      synth.cancel();
+      synth.speak(utter);
+    }
+
+    const output = document.getElementById("output");
+    const cardsDiv = document.getElementById("cards");
+    const manualInput = document.getElementById("manualInput");
+
+    async function callGazini(endpoint, body) {
+      speak("The Great Gazini is reading your fortune, " + body.name);
+      chime.currentTime = 0; chime.play();
+      output.textContent = "🔮 Gazini prepleta zvezde ...";
+      cardsDiv.innerHTML = "";
+
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        chime.pause(); chime.currentTime = 0;
+        speak("The Great Gazini has found your fortune.");
+
+        cardsDiv.innerHTML = data.cards.map((c, i) => `
+          <div>
+            <img src="${data.images[i]}" alt="${c}">
+            <br><span>${c}</span>
+          </div>`).join("");
+
+        output.textContent = data.reading;
+      } catch (err) {
+        chime.pause();
+        output.textContent = "Napaka: " + err.message;
+      }
+    }
+
+    document.getElementById("autoBtn").addEventListener("click", () => {
+      manualInput.style.display = "none";
+      const name = document.getElementById("name").value || "Popotnik";
+      const sign = document.getElementById("sign").value || "neznano";
+      callGazini("/reading", { name, sign });
+    });
+
+    document.getElementById("manualBtn").addEventListener("click", () => {
       manualInput.style.display =
         manualInput.style.display === "none" ? "block" : "none";
-    };
+    });
 
-    form.onsubmit = async (e) => {
-      e.preventDefault();
-      chime.play();
-      loading.classList.remove("hidden");
-      result.classList.add("hidden");
-
-      const payload = {
-        name: document.getElementById("name").value,
-        sign: document.getElementById("sign").value
-      };
-
-      const r = await fetch("/reading", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const data = await r.json();
-      chime.pause(); chime.currentTime = 0;
-      loading.classList.add("hidden");
-      result.classList.remove("hidden");
-
-      if (data.error) {
-        readingText.textContent = "Napaka: " + data.error;
-        return;
-      }
-      cardsDiv.innerHTML = data.cards
-        .map(c => `<img src="/cards/${c.toLowerCase().replaceAll(' ', '_')}.png" alt="${c}" />`)
-        .join("");
-      readingText.textContent = data.reading;
-    };
-
-    manualSubmit.onclick = async () => {
-      chime.play();
-      loading.classList.remove("hidden");
-      result.classList.add("hidden");
-
-      const name = document.getElementById("name").value;
-      const sign = document.getElementById("sign").value;
-      const manualCards = document
-        .getElementById("manualCards")
-        .value.split(/,|\s+/)
-        .filter(c => c.trim().length > 0);
-
-      const r = await fetch("/reading", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, sign, manual: true, cards: manualCards })
-      });
-      const data = await r.json();
-      chime.pause(); chime.currentTime = 0;
-      loading.classList.add("hidden");
-      result.classList.remove("hidden");
-
-      if (data.error) {
-        readingText.textContent = "Napaka: " + data.error;
-        return;
-      }
-      cardsDiv.innerHTML = data.cards
-        .map(c => `<img src="/cards/${c.toLowerCase().replaceAll(' ', '_')}.png" alt="${c}" />`)
-        .join("");
-      readingText.textContent = data.reading;
-    };
+    document.getElementById("manualStart").addEventListener("click", () => {
+      const name = document.getElementById("name").value || "Popotnik";
+      const sign = document.getElementById("sign").value || "neznano";
+      const cards = [
+        document.getElementById("card1").value.trim(),
+        document.getElementById("card2").value.trim(),
+        document.getElementById("card3").value.trim()
+      ].filter(Boolean);
+      callGazini("/manual_reading", { name, sign, cards });
+    });
   </script>
 </body>
 </html>
