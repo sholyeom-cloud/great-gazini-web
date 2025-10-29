@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="sl">
+<head>
+  <meta charset="UTF-8" />
+  <title>The Great Gazini 🔮</title>
+  <style>
+    body{background:#0f0f14;color:#e8e6e3;font-family:Segoe UI,system-ui,sans-serif;margin:0}
+    main{max-width:900px;margin:0 auto;padding:24px;position:relative;min-height:100vh;box-sizing:border-box}
+    h1{text-align:center;margin:0 0 16px}
+    .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+    input,select,button{padding:10px 12px;border-radius:10px;border:none}
+    input,select{background:#1b1b21;color:#e8e6e3}
+    button{background:#262630;color:#fff;cursor:pointer}
+    button:hover{background:#343446}
+    #cards{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+    #cards div{text-align:center}
+    #cards img{width:180px;border-radius:10px;box-shadow:0 0 10px #000}
+    #output{white-space:pre-wrap;background:#121219;padding:14px;border-radius:12px;margin-top:20px}
+    footer{
+      position:fixed;
+      bottom:10px;left:10px;
+      font-size:14px;
+      color:#aaa;
+    }
+    footer a{
+      color:#e8e6e3;
+      text-decoration:none;
+      border-bottom:1px dotted #555;
+    }
+    footer a:hover{color:#fff}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>🔮 The Great Gazini 🔮</h1>
+
+    <!-- User details -->
+    <div class="row">
+      <input id="name" placeholder="Tvoje ime" />
+      <select id="sign">
+        <option>oven</option><option>bik</option><option>dvojček</option><option>rak</option>
+        <option>lev</option><option>devica</option><option>tehtnica</option><option>škorpijon</option>
+        <option>strelec</option><option>kozorog</option><option>vodnar</option><option>ribi</option>
+      </select>
+    </div>
+
+    <!-- Mode buttons -->
+    <div class="row">
+      <button id="autoBtn">🎲 Avtomatsko branje</button>
+      <button id="manualBtn">✋ Ročno branje</button>
+    </div>
+
+    <!-- Manual input area -->
+    <div id="manualInput" style="display:none;text-align:center;margin-bottom:10px;">
+      <input id="card1" placeholder="Karta 1 (npr. The Sun)" style="margin:4px;">
+      <input id="card2" placeholder="Karta 2 (npr. The Moon)" style="margin:4px;">
+      <input id="card3" placeholder="Karta 3 (npr. Death)" style="margin:4px;">
+      <button id="manualStart">🔮 Pošlji karte</button>
+    </div>
+
+    <div id="cards"></div>
+    <pre id="output"></pre>
+  </main>
+
+  <!-- ✨ footer link -->
+  <footer>
+    💫 Hočeš svojo spletno stran?
+    <a href="https://www.instagram.com/tilen_supoort/" target="_blank">KLIKNI ME IN PISI</a>
+  </footer>
+
+  <audio id="chime" src="/static/chime.mp3"></audio>
+
+  <script>
+    const synth = window.speechSynthesis;
+    const chime = document.getElementById("chime");
+
+    function speak(text) {
+      if (!synth) return;
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = "en-US";
+      utter.pitch = 1;
+      utter.rate = 0.9;
+      synth.cancel();
+      synth.speak(utter);
+    }
+
+    const output = document.getElementById("output");
+    const cardsDiv = document.getElementById("cards");
+    const manualInput = document.getElementById("manualInput");
+
+    async function callGazini(endpoint, body) {
+      speak("The Great Gazini is reading your fortune, " + body.name);
+      chime.currentTime = 0; chime.play();
+      output.textContent = "🔮 Gazini prepleta zvezde ...";
+      cardsDiv.innerHTML = "";
+
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: {"Content-Type":"application/json"},
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+
+        chime.pause(); chime.currentTime = 0;
+        speak("The Great Gazini has found your fortune.");
+
+        cardsDiv.innerHTML = data.cards.map((c, i) => `
+          <div>
+            <img src="${data.images[i]}" alt="${c}">
+            <br><span>${c}</span>
+          </div>`).join("");
+
+        output.textContent = data.reading;
+      } catch (err) {
+        chime.pause();
+        output.textContent = "Napaka: " + err.message;
+      }
+    }
+
+    // --- Auto mode ---
+    document.getElementById("autoBtn").addEventListener("click", () => {
+      manualInput.style.display = "none";
+      const name = document.getElementById("name").value || "Popotnik";
+      const sign = document.getElementById("sign").value || "neznano";
+      callGazini("/reading", { name, sign });
+    });
+
+    // --- Manual mode show input ---
+    document.getElementById("manualBtn").addEventListener("click", () => {
+      manualInput.style.display = "block";
+    });
+
+    // --- Manual mode submit ---
+    document.getElementById("manualStart").addEventListener("click", () => {
+      const name = document.getElementById("name").value || "Popotnik";
+      const sign = document.getElementById("sign").value || "neznano";
+      const cards = [
+        document.getElementById("card1").value.trim(),
+        document.getElementById("card2").value.trim(),
+        document.getElementById("card3").value.trim()
+      ].filter(Boolean);
+      callGazini("/manual_reading", { name, sign, cards });
+    });
+  </script>
+</body>
+</html>
