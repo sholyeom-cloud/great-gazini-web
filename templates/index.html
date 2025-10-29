@@ -15,14 +15,14 @@
       max-width: 900px;
       margin: 0 auto;
       padding: 24px;
-      position: relative;
       min-height: 100vh;
       box-sizing: border-box;
     }
     h1 {
       text-align: center;
       margin: 0 0 16px;
-      font-size: 1.8em;
+      font-size: 2em;
+      letter-spacing: 1px;
     }
     .row {
       display: flex;
@@ -44,39 +44,55 @@
       background: #262630;
       color: #fff;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.2s;
     }
     button:hover {
       background: #343446;
+      transform: scale(1.05);
     }
+
+    /* --- Cards --- */
     #cards {
       display: flex;
-      gap: 12px;
+      gap: 18px;
       flex-wrap: wrap;
       justify-content: center;
-      margin-top: 12px;
+      margin-top: 20px;
     }
     #cards div {
       text-align: center;
+      animation: fadeIn 1.3s ease;
     }
     #cards img {
-      width: 180px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px #000;
-      transition: transform 0.3s;
+      width: 210px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px #000;
+      transition: transform 0.3s ease;
+      opacity: 0;
+      animation: fadeIn 1s forwards;
     }
     #cards img:hover {
-      transform: scale(1.05);
+      transform: scale(1.07);
     }
+    #cards span {
+      display: block;
+      margin-top: 6px;
+      font-size: 1rem;
+      opacity: 0.9;
+    }
+
+    /* --- Reading text --- */
     #output {
       white-space: pre-wrap;
       background: #121219;
-      padding: 14px;
+      padding: 18px;
       border-radius: 12px;
-      margin-top: 20px;
-      font-size: 1rem;
-      line-height: 1.5;
+      margin-top: 25px;
+      font-size: 1.05rem;
+      line-height: 1.6;
+      box-shadow: 0 0 10px #000;
     }
+
     footer {
       position: fixed;
       bottom: 10px;
@@ -93,17 +109,22 @@
       color: #fff;
     }
 
-    /* 📱 MOBILE FIXES */
+    /* --- Animations --- */
+    @keyframes fadeIn {
+      0% {opacity: 0; transform: translateY(10px);}
+      100% {opacity: 1; transform: translateY(0);}
+    }
+
+    /* 📱 MOBILE VERSION */
     @media (max-width: 700px) {
       h1 {
-        font-size: 1.4em;
-        margin-bottom: 10px;
+        font-size: 1.5em;
       }
       #cards img {
-        width: 90px; /* 🔮 smaller cards for phones */
+        width: 95px; /* smaller cards for phones */
       }
       #output {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         padding: 10px;
       }
       input, select, button {
@@ -113,7 +134,7 @@
       footer {
         position: static;
         text-align: center;
-        margin-top: 30px;
+        margin-top: 20px;
       }
     }
   </style>
@@ -157,7 +178,11 @@
   <script>
     const synth = window.speechSynthesis;
     const chime = document.getElementById("chime");
+    const output = document.getElementById("output");
+    const cardsDiv = document.getElementById("cards");
+    const manualInput = document.getElementById("manualInput");
 
+    // 🎤 Gazini Speaks
     function speak(text) {
       if (!synth) return;
       const utter = new SpeechSynthesisUtterance(text);
@@ -168,13 +193,12 @@
       synth.speak(utter);
     }
 
-    const output = document.getElementById("output");
-    const cardsDiv = document.getElementById("cards");
-    const manualInput = document.getElementById("manualInput");
-
     async function callGazini(endpoint, body) {
+      // intro voice
       speak("The Great Gazini is reading your fortune, " + body.name);
-      chime.currentTime = 0; chime.play();
+      chime.currentTime = 0;
+      chime.play();
+
       output.textContent = "🔮 Gazini prepleta zvezde ...";
       cardsDiv.innerHTML = "";
 
@@ -187,22 +211,28 @@
         const data = await res.json();
         if (data.error) throw new Error(data.error);
 
-        chime.pause(); chime.currentTime = 0;
+        // stop sound + speech when reading is ready
+        chime.pause();
+        chime.currentTime = 0;
+        synth.cancel();
         speak("The Great Gazini has found your fortune.");
 
+        // fade in cards
         cardsDiv.innerHTML = data.cards.map((c, i) => `
-          <div>
+          <div style="animation-delay:${i * 0.4}s">
             <img src="${data.images[i]}" alt="${c}">
-            <br><span>${c}</span>
+            <span>${c}</span>
           </div>`).join("");
 
         output.textContent = data.reading;
       } catch (err) {
         chime.pause();
+        synth.cancel();
         output.textContent = "Napaka: " + err.message;
       }
     }
 
+    // 🔮 Automatic reading
     document.getElementById("autoBtn").addEventListener("click", () => {
       manualInput.style.display = "none";
       const name = document.getElementById("name").value || "Popotnik";
@@ -210,11 +240,13 @@
       callGazini("/reading", { name, sign });
     });
 
+    // ✋ Manual toggle
     document.getElementById("manualBtn").addEventListener("click", () => {
       manualInput.style.display =
         manualInput.style.display === "none" ? "block" : "none";
     });
 
+    // ✋ Manual reading send
     document.getElementById("manualStart").addEventListener("click", () => {
       const name = document.getElementById("name").value || "Popotnik";
       const sign = document.getElementById("sign").value || "neznano";
